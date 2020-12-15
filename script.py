@@ -1,4 +1,5 @@
 import requests
+import random
 import time
 import json
 
@@ -16,26 +17,47 @@ class IGUsernameChecker:
         print('Checking username availabilities...')
 
         self.refreshSession()
-        payload = { 'email': 'simbop131738@gmail.com', 'username': 'aa', 'first_name': 'beep', 'password': 'bauiop90!' }
-        for username in usernames:
+        self.generateUsernames()
+        payload = { 'email': self.getRandomEmail(), 'username': 'aa', 'first_name': self.getRandomString(10), 'password': self.getRandomString(15) } 
+        print(payload)
+        for username in self.usernames:
             if (self.isTimeToRefresh()):
                 refresh_count = 0
                 self.refreshSession()
             print(username)
             payload['username'] = username
+            print(payload)
             r = self.session.post(REG_URL, data=payload)
+            print(r.text)
             r_decoded = json.loads(r.text);
             time.sleep(.5)
-            print r_decoded
+            print(r_decoded)
             if (r_decoded['dryrun_passed'] == True):
                 print('USERNAME ' + username + ' IS AVAILABLE.')
+
+    def getRandomEmail(self):
+        a = ['flee', 'nar', '22jk', 'afjkaf', 'sfjk','sfjskf', 'afsasfj','asfkjfka','sjfkjfsi','af','sisi','boo','plah','gimar']
+        b = ['gmail.com', 'yahoo.com', 'hotmail.com', 'live.com']
+        email_address = ''
+        for i in range(0, random.randint(2, 4)):
+            email_address += a[i]
+        email_host = b[random.randint(0, len(b) - 1)]
+        email_address += '@' + email_host
+        return email_address
+
+    def getRandomString(self, num):
+        alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+        name = ''
+        for i in range(0, random.randint(6, num)):
+            name += alphabet[i]
+        return name
 
     def generateUsernames(self):
         alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
         print('Generating usernames...')
-        for i in range(0, 26):
-            for j in range(0, 26):
-                for k in range(0, 26):
+        for i in range(25, 0, -1):
+            for j in range(25, 0, -1):
+                for k in range(25, 0, -1):
                     username = alphabet[i] + alphabet[j] + alphabet[k]
                     self.usernames.append(username)
         print('Finished generating ' + str(len(self.usernames)) + ' usernames');
@@ -53,4 +75,5 @@ class IGUsernameChecker:
         return self.refresh_count >= self.refresh_at
 
 IGUC = IGUsernameChecker()
+
 
