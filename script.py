@@ -2,11 +2,16 @@ import requests
 import random
 import time
 import json
+import os
 
 CHROME_WIN_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36'
 BASE_URL = 'https://www.instagram.com/'
 REG_URL = 'https://www.instagram.com/accounts/web_create_ajax/attempt/'
-STORIES_UA = 'Instagram 123.0.0.21.114 (iPhone; CPU iPhone OS 11_4 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15'
+STORIES_UA = ' (iPhone; CPU iPhone OS 11_4 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15'
+REAL_STORIES_UA = 'Instagram 123.0.0.21.114 (iPhone; CPU iPhone OS 11_4 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15'
+
+proxy = { 'http': os.getenv('PROXY_API') }
+print(proxy)
 
 class IGUsernameChecker:
     def __init__(self):
@@ -18,19 +23,20 @@ class IGUsernameChecker:
 
         self.refreshSession()
         self.generateUsernames()
-        payload = { 'email': self.getRandomEmail(), 'username': 'aa', 'first_name': self.getRandomName(10), 'password': self.getRandomPassword() } 
+        payload = { 'email': self.getRandomEmail(), 'username': 'aa', 'first_name': self.getRandomName(10), 'password': self.getRandomPassword() }
         for username in self.usernames:
             if (self.isTimeToRefresh()):
-                refresh_count = 0
+                self.refresh_count = 0
                 self.refreshSession()
+            self.refresh_count += 1
             payload['username'] = username
             payload['email'] = self.getRandomEmail()
             payload['first_name'] = self.getRandomName(10)
             payload['password'] = self.getRandomPassword()
-            r = self.session.post(REG_URL, data=payload)
-            r_decoded = json.loads(r.text);
-            time.sleep(.5)
+            r = self.session.post(REG_URL, data=payload, proxies=proxy)
             try:
+                r_decoded = json.loads(r.text);
+                time.sleep(.5)
                 if ('errors' in r_decoded and 'username' in r_decoded['errors']):
                     print('username ' + username + ' is unavailable.')
                 else:
@@ -38,6 +44,7 @@ class IGUsernameChecker:
                     print('USERNAME ' + username + ' IS AVAILABLE.')
             except:
                 print(r.text)
+                print(r.content)
 
 
     def getRandomEmail(self):
@@ -91,10 +98,17 @@ class IGUsernameChecker:
     def refreshSession(self):
         print('Refreshing session.')
         self.session = requests.Session()
-        self.session.headers.update({'user-agent': STORIES_UA})
-        r = self.session.get(REG_URL)
+        ip = self.getRandomIP().rstrip()
+        user_agent = 'Instagram ' + str(ip) + STORIES_UA
+        print(user_agent)
+        self.session.headers.update({'user-agent': user_agent})
+        r = self.session.get(REG_URL, proxies=proxy)
         csrftoken = r.cookies.get('csrftoken')
         self.session.headers.update({'x-csrftoken': csrftoken})
+
+    def getRandomIP(self):
+        r = self.session.get("http://ip.smartproxy.com", proxies=proxy)
+        return r.text
 
     def isTimeToRefresh(self):
         return self.refresh_count >= self.refresh_at
