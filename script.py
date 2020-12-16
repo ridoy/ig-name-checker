@@ -18,39 +18,64 @@ class IGUsernameChecker:
 
         self.refreshSession()
         self.generateUsernames()
-        payload = { 'email': self.getRandomEmail(), 'username': 'aa', 'first_name': self.getRandomString(10), 'password': self.getRandomString(15) } 
-        print(payload)
+        payload = { 'email': self.getRandomEmail(), 'username': 'aa', 'first_name': self.getRandomName(10), 'password': self.getRandomPassword() } 
         for username in self.usernames:
             if (self.isTimeToRefresh()):
                 refresh_count = 0
                 self.refreshSession()
-            print(username)
             payload['username'] = username
-            print(payload)
+            payload['email'] = self.getRandomEmail()
+            payload['first_name'] = self.getRandomName(10)
+            payload['password'] = self.getRandomPassword()
             r = self.session.post(REG_URL, data=payload)
-            print(r.text)
             r_decoded = json.loads(r.text);
             time.sleep(.5)
-            print(r_decoded)
-            if (r_decoded['dryrun_passed'] == True):
-                print('USERNAME ' + username + ' IS AVAILABLE.')
+            try:
+                if ('errors' in r_decoded and 'username' in r_decoded['errors']):
+                    print('username ' + username + ' is unavailable.')
+                else:
+                    print(r.text)
+                    print('USERNAME ' + username + ' IS AVAILABLE.')
+            except:
+                print(r.text)
+
 
     def getRandomEmail(self):
         a = ['flee', 'nar', '22jk', 'afjkaf', 'sfjk','sfjskf', 'afsasfj','asfkjfka','sjfkjfsi','af','sisi','boo','plah','gimar']
         b = ['gmail.com', 'yahoo.com', 'hotmail.com', 'live.com']
         email_address = ''
         for i in range(0, random.randint(2, 4)):
-            email_address += a[i]
+            email_address += a[random.randint(0, len(a) - 1)]
         email_host = b[random.randint(0, len(b) - 1)]
         email_address += '@' + email_host
         return email_address
 
-    def getRandomString(self, num):
+    def getRandomName(self, num):
         alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
         name = ''
         for i in range(0, random.randint(6, num)):
-            name += alphabet[i]
+            name += alphabet[random.randint(0, len(alphabet) - 1)]
         return name
+
+    def getRandomPassword(self):
+        lower = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+        upper = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+        nums = ['1', '2','3','4','5','6','7','8','9']
+        symbols = ['!', '?', '$']
+        password = ''
+        for i in range(0, random.randint(7, 15)):
+            chartype = random.randint(0, 3)
+            if chartype == 0:
+                password += lower[random.randint(0, len(lower) - 1)]
+            elif chartype == 1:
+                password += upper[random.randint(0, len(upper) - 1)]
+            elif chartype == 1:
+                password += nums[random.randint(0, len(nums) - 1)]
+            elif chartype == 3:
+                password += symbols[random.randint(0, len(symbols) - 1)]
+        return password
+
+
 
     def generateUsernames(self):
         alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
